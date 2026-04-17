@@ -40,6 +40,9 @@ users:
   - email: Saddam.salah510@gmail.com
     name: Saddam
 
+  - email: aa01096220361@gmail.com
+    name: Aya
+
 newsletter:
   title: "Weekly Tech Radar"
   subtitle: "Your curated AI & Technology digest"
