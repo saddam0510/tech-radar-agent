@@ -12,6 +12,8 @@ import time
 from datetime import datetime, timezone, timedelta
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from sources.base import Article, BaseSource
 from utils.logger import get_logger
@@ -26,12 +28,19 @@ class SemanticScholarSource(BaseSource):
     name = "Semantic Scholar"
     default_tier = 1
 
-    def _headers(self) -> dict:
-        h: dict = {}
+    def _session(self) -> requests.Session:
+        session = requests.Session()
         key = os.getenv("S2_API_KEY", "").strip()
         if key:
-            h["x-api-key"] = key
-        return h
+            session.headers["x-api-key"] = key
+        retry = Retry(
+            total=3,
+            backoff_factor=2,       # waits 2s, 4s, 8s between retries
+            status_forcelist=[429, 500, 502, 503],
+            raise_on_status=False,
+        )
+        session.mount("https://", HTTPAdapter(max_retries=retry))
+        return session
 
     async def fetch(
         self,
@@ -61,11 +70,12 @@ class SemanticScholarSource(BaseSource):
         articles: list[Article] = []
         seen: set[str] = set()
 
+        session = self._session()
         for i, query in enumerate(queries):
             if i > 0:
-                time.sleep(0.5)  # gentle rate-limiting
+                time.sleep(2)   # S2 free tier: ~1 req/s; be conservative
             try:
-                resp = requests.get(
+                resp = session.get(
                     f"{_API_BASE}/paper/search",
                     params={
                         "query": query,
@@ -73,8 +83,7 @@ class SemanticScholarSource(BaseSource):
                         "limit": max_per_query,
                         "sort": "publicationDate:desc",
                     },
-                    headers=self._headers(),
-                    timeout=15,
+                    timeout=20,
                 )
                 resp.raise_for_status()
 

@@ -1,7 +1,10 @@
-"""Papers with Code source — trending ML papers with code.
+"""Papers with Code / HuggingFace Papers source — trending ML papers.
 
-Tier 1: high-signal, structured research + implementation data.
-API docs: https://paperswithcode.com/api/v1/docs/
+Papers with Code now redirects to HuggingFace Papers, so we use the
+HuggingFace Papers API which provides upvotes, AI summaries, and rich metadata.
+
+Tier 1: high-signal research with community-validated popularity (upvotes).
+API: https://huggingface.co/api/papers
 """
 from __future__ import annotations
 
@@ -15,7 +18,7 @@ from utils.logger import get_logger
 
 logger = get_logger("source.paperswithcode")
 
-_API_BASE = "https://paperswithcode.com/api/v1"
+_HF_PAPERS_API = "https://huggingface.co/api/papers"
 
 
 class PapersWithCodeSource(BaseSource):
@@ -36,59 +39,83 @@ class PapersWithCodeSource(BaseSource):
         tools: list[str],
         days_back: int,
     ) -> list[Article]:
-        max_results: int = self.config.get("max_results", 30)
-        keywords = {kw.lower() for kw in topics + tools}
         cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+        keywords = {kw.lower() for kw in topics + tools}
         articles: list[Article] = []
+        seen: set[str] = set()
 
-        # ── Trending papers (by date) ─────────────────────────────────────────
-        try:
-            resp = requests.get(
-                f"{_API_BASE}/papers/",
-                params={
-                    "ordering": "-published",
-                    "items_per_page": max_results,
-                    "page": 1,
-                },
-                timeout=15,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            papers = data.get("results", [])
+        # Search for each topic individually to get targeted results
+        queries: list[str] = self.config.get(
+            "queries",
+            [
+                "large language model",
+                "machine learning",
+                "NLP natural language",
+                "generative AI",
+                "deep learning",
+                "AI agent",
+            ],
+        )
+        max_per_query: int = self.config.get("max_results_per_query", 15)
 
-            for paper in papers:
-                pub_str = paper.get("published") or ""
-                try:
-                    pub = datetime.fromisoformat(pub_str).replace(tzinfo=timezone.utc)
-                except Exception:
-                    continue
-
-                if pub < cutoff:
-                    continue
-
-                title = paper.get("title", "")
-                abstract = self._truncate(paper.get("abstract") or "")
-                url = paper.get("url_abs") or paper.get("paper_url") or ""
-                stars = paper.get("github_link_count") or 0
-
-                text = f"{title} {abstract}".lower()
-                if keywords and not any(kw in text for kw in keywords):
-                    continue
-
-                articles.append(
-                    Article(
-                        title=title,
-                        link=url or f"https://paperswithcode.com",
-                        summary=abstract or "No abstract available.",
-                        date=pub,
-                        source="Papers with Code",
-                        content_type="Research",
-                        tier=1,
-                        popularity_score=self._normalise_popularity(stars, 500),
-                    )
+        for query in queries:
+            try:
+                resp = requests.get(
+                    _HF_PAPERS_API,
+                    params={"q": query, "limit": max_per_query},
+                    timeout=15,
                 )
-        except Exception as exc:
-            logger.warning("Papers with Code error: %s", exc)
+                resp.raise_for_status()
+                papers = resp.json()
+                if not isinstance(papers, list):
+                    continue
+
+                for paper in papers:
+                    paper_id = paper.get("id", "")
+                    if paper_id in seen:
+                        continue
+                    seen.add(paper_id)
+
+                    pub_str = paper.get("publishedAt", "")
+                    try:
+                        pub = datetime.fromisoformat(
+                            pub_str.replace("Z", "+00:00")
+                        )
+                    except Exception:
+                        continue
+
+                    if pub < cutoff:
+                        continue
+
+                    title = paper.get("title", "")
+                    # Prefer AI summary, fall back to summary field
+                    summary = (
+                        paper.get("ai_summary")
+                        or paper.get("summary")
+                        or "No abstract available."
+                    )
+                    summary = self._truncate(summary)
+                    upvotes = paper.get("upvotes", 0) or 0
+                    link = f"https://huggingface.co/papers/{paper_id}"
+
+                    text = f"{title} {summary}".lower()
+                    if keywords and not any(kw in text for kw in keywords):
+                        continue
+
+                    articles.append(
+                        Article(
+                            title=title,
+                            link=link,
+                            summary=summary,
+                            date=pub,
+                            source="Papers with Code",
+                            content_type="Research",
+                            tier=1,
+                            popularity_score=self._normalise_popularity(upvotes, 200),
+                        )
+                    )
+            except Exception as exc:
+                logger.warning("HF Papers query '%s' error: %s", query, exc)
 
         logger.debug("Papers with Code -> %d articles", len(articles))
         return articles

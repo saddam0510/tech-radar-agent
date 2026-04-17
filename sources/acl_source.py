@@ -13,6 +13,8 @@ from email.utils import parsedate_to_datetime
 
 import feedparser
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from sources.base import Article, BaseSource
 from utils.logger import get_logger
@@ -95,19 +97,23 @@ class ACLSource(BaseSource):
         max_per_query: int = self.config.get("max_results_per_query", 8)
         queries: list[str] = self.config.get("queries", _NLP_QUERIES)
 
+        retry = Retry(total=3, backoff_factor=2, status_forcelist=[429, 500, 503], raise_on_status=False)
+        session = requests.Session()
+        session.mount("https://", HTTPAdapter(max_retries=retry))
+
         for i, query in enumerate(queries):
             if i > 0:
-                time.sleep(0.5)
+                time.sleep(3)   # stagger to avoid competing with semantic_scholar_source
             try:
-                resp = requests.get(
+                resp = session.get(
                     _S2_API,
                     params={
                         "query": query,
                         "fields": _S2_FIELDS,
-                        "limit": max_per_query * 3,  # over-fetch; filter by venue
+                        "limit": max_per_query * 3,
                         "sort": "publicationDate:desc",
                     },
-                    timeout=15,
+                    timeout=20,
                 )
                 resp.raise_for_status()
                 for paper in resp.json().get("data", []):
