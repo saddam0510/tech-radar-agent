@@ -6,15 +6,18 @@ A local, fully automated weekly newsletter agent that fetches AI & tech content 
 
 ## ✨ Features
 
-- **Modular source connectors** — arXiv, GitHub, Medium, Docs/RSS, YouTube, Reddit, Google Scholar, LinkedIn (placeholder)
-- **Topic-aware filtering** — keyword + optional semantic matching (sentence-transformers)
+- **11 source connectors** across 3 tiers — arXiv, GitHub (search + releases + trending), HuggingFace (blog + models hub), Papers with Code, Semantic Scholar, ACL Anthology, Official Blogs (OpenAI, DeepMind, Meta AI, Databricks, Teradata, Docker, K8s, Airflow, TDS, Import AI, The Batch), Medium, Reddit, YouTube, LinkedIn (placeholder)
+- **3-tier source system** — Tier 1 (high-signal) surfaces above Tier 2 (community) in every section
+- **Topic → source affinity routing** — each topic has preferred sources that receive a relevance boost
+- **Composite ranking** — tier + relevance + popularity (stars/upvotes/views/citations) + recency
 - **Content-type sections** — Research 🔬 · Tools & Releases 🔧 · News & Articles 📰 · Open Source 💻
 - **Topic badges** — each article tagged with its matched topic (LLMs, Docker, Airflow, etc.)
-- **Deduplication** — URL-exact + fuzzy title similarity
+- **Deduplication** — URL-exact + fuzzy Jaccard title similarity
 - **Optional LLM summarization** — Claude or OpenAI condenses long article summaries
-- **Clean HTML email** — responsive, mobile-friendly, dark-header design
+- **Optional semantic matching** — sentence-transformers for embedding-based relevance scoring
+- **Clean HTML email** — responsive, mobile-friendly, dark-header design with stats bar + TOC
 - **Weekly scheduler** — APScheduler (local) or Apache Airflow DAG
-- **Configurable everything** — topics, users, sources, schedule via `config/config.yaml`
+- **Configurable everything** — topics, users, sources, schedule, filters via `config/config.yaml`
 
 ---
 
@@ -23,11 +26,16 @@ A local, fully automated weekly newsletter agent that fetches AI & tech content 
 ```
 tech_radar/
 ├── config/
-│   └── config.yaml          # topics, users, sources, schedule
-├── sources/                 # pluggable source connectors
-│   ├── base.py              # Article dataclass + BaseSource ABC
-│   ├── arxiv_source.py
-│   ├── github_source.py
+│   └── config.yaml           # topics, users, sources, schedule, filters
+├── sources/                  # pluggable source connectors
+│   ├── base.py               # Article dataclass (tier, popularity_score) + BaseSource ABC
+│   ├── arxiv_source.py       # Tier 1
+│   ├── github_source.py      # Tier 1 — releases + search + trending
+│   ├── huggingface_source.py # Tier 1 — blog RSS + models hub
+│   ├── papers_with_code_source.py  # Tier 1 — HF Papers API
+│   ├── semantic_scholar_source.py  # Tier 1 — academic search + citations
+│   ├── acl_source.py         # Tier 1 — NLP venue papers
+│   ├── official_blogs_source.py    # Tier 1 — 11 curated official blogs
 │   ├── medium_source.py
 │   ├── youtube_source.py
 │   ├── reddit_source.py
@@ -35,10 +43,18 @@ tech_radar/
 │   ├── scholar_source.py
 │   ├── linkedin_source.py
 │   └── __init__.py          # source registry
+│   ├── medium_source.py      # Tier 2
+│   ├── reddit_source.py      # Tier 2 — hot posts, min_upvotes filter
+│   ├── youtube_source.py     # Tier 2 — channel allowlist, min_views filter
+│   ├── docs_source.py        # Tier 2 — generic RSS (disabled by default)
+│   ├── scholar_source.py     # Tier 3 (disabled)
+│   ├── linkedin_source.py    # Tier 3 placeholder (disabled)
+│   └── __init__.py           # source registry with tier metadata
 ├── processing/
-│   ├── filter.py            # relevance scoring (keyword + semantic)
-│   ├── ranker.py            # groups by section, top-N per topic
-│   └── deduplicator.py
+│   ├── filter.py             # scoring: keywords + tools + recency + tier + popularity
+│   ├── ranker.py             # tier-aware composite ranking per section
+│   ├── topic_router.py       # topic → source affinity map + boost
+│   └── deduplicator.py       # URL-exact + Jaccard title dedup
 ├── llm/
 │   └── summarizer.py        # Claude / OpenAI enrichment (optional)
 ├── newsletter/
