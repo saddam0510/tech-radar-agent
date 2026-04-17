@@ -44,7 +44,18 @@ newsletter:
   title: "Weekly Tech Radar"
   subtitle: "Your curated AI & Technology digest"
   max_articles_per_topic: 5
+  max_per_section: 5           # hard cap on articles shown per section in the email
   days_back: 7
+
+# Per-topic phrase gates — article must contain at least one phrase to match the topic.
+# Use this for topics that are product/package names to avoid false positives from
+# general keyword overlap (e.g. "teradataml" package vs. generic "Teradata ML" content).
+topic_phrases:
+  "Teradata ML":
+    - "teradataml"
+    - "teradata ml"
+    - "teradata python"
+    - "teradata vantage ml"
 
 llm:
   enabled: false

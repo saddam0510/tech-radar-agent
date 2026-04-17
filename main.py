@@ -68,6 +68,8 @@ def run(preview: bool = False, dry_run: bool = False) -> None:
     proc_cfg: dict = config.get("processing", {})
     days_back: int = newsletter_cfg.get("days_back", 7)
     max_per_topic: int = newsletter_cfg.get("max_articles_per_topic", 5)
+    max_per_section: int = newsletter_cfg.get("max_per_section", 5)
+    topic_phrases: dict = config.get("topic_phrases", {})
 
     # ── 1. Build sources ──────────────────────────────────────────────────────
     sources = build_sources(config.get("sources", {}))
@@ -98,13 +100,16 @@ def run(preview: bool = False, dry_run: bool = False) -> None:
         tools=tools,
         use_semantic=proc_cfg.get("semantic_matching", False),
         min_score=proc_cfg.get("min_relevance_score", 0.2),
+        topic_phrases=topic_phrases,
     )
 
     # ── 4b. Apply source-affinity boost (topic_router) ────────────────────────
     articles = apply_affinity_boost(articles)
 
     # ── 5. Group & rank by section ────────────────────────────────────────────
-    sections = group_and_rank(articles, topics=topics, max_per_topic=max_per_topic)
+    sections = group_and_rank(
+        articles, topics=topics, max_per_topic=max_per_topic, max_per_section=max_per_section
+    )
 
     if dry_run:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")

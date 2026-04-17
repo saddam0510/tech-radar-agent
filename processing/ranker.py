@@ -59,6 +59,7 @@ def group_and_rank(
     articles: list[Article],
     topics: list[str],
     max_per_topic: int = 5,
+    max_per_section: int = 5,
 ) -> dict[str, list[Article]]:
     """Group articles into sections; within each section rank by composite score.
 
@@ -99,9 +100,9 @@ def group_and_rank(
                 seen.add(a.link)
                 unique.append(a)
 
-        # Final section sort: tier first, then relevance + popularity
+        # Final section sort: tier first, then relevance + popularity; cap at max_per_section
         unique.sort(key=_composite_rank)
-        result[section] = unique
+        result[section] = unique[:max_per_section]
 
     total = sum(len(v) for v in result.values())
     tier_counts = defaultdict(int)

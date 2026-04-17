@@ -79,12 +79,22 @@ def _semantic_score(article: Article, topic: str) -> Optional[float]:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
+def _passes_phrase_gate(article: Article, topic: str, topic_phrases: dict[str, list[str]]) -> bool:
+    """Return False if the topic has required phrases and none appear in the article."""
+    phrases = topic_phrases.get(topic)
+    if not phrases:
+        return True
+    haystack = f"{article.title} {article.summary}".lower()
+    return any(p.lower() in haystack for p in phrases)
+
+
 def score_articles(
     articles: list[Article],
     topics: list[str],
     tools: list[str],
     use_semantic: bool = False,
     min_score: float = 0.2,
+    topic_phrases: dict[str, list[str]] | None = None,
 ) -> list[Article]:
     """Score each article against all topics; assign the best-matching one.
 
@@ -97,7 +107,14 @@ def score_articles(
 
     When semantic mode is on, keyword and semantic scores are blended 50/50.
     Affinity boost is applied separately by topic_router.apply_affinity_boost().
+
+    topic_phrases: optional dict mapping topic name → required phrases. If a topic
+    has phrases defined, an article must contain at least one phrase in its
+    title+summary to be eligible for that topic. Prevents false-positive matches
+    for topics that are product/package names (e.g. "Teradata ML" package vs.
+    generic Teradata + ML content).
     """
+    _phrases = topic_phrases or {}
     scored: list[Article] = []
 
     for article in articles:
@@ -105,6 +122,9 @@ def score_articles(
         best_topic = None
 
         for topic in topics:
+            if not _passes_phrase_gate(article, topic, _phrases):
+                continue
+
             kw = _keyword_score(article, topic, tools)
 
             if use_semantic:
