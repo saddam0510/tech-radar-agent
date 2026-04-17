@@ -1,6 +1,6 @@
 schedule:
-  weekday: monday        # monday, tuesday, wednesday, thursday, friday, saturday, sunday
-  time: "08:00"          # 24h format, local time
+  weekday: monday
+  time: "08:00"
 
 topics:
   - Teradata ML
@@ -32,6 +32,9 @@ tools:
   - HuggingFace
   - Transformers
   - FastAPI
+  - RAG
+  - LoRA
+  - RLHF
 
 users:
   - email: Saddam.salah510@gmail.com
@@ -44,55 +47,132 @@ newsletter:
   days_back: 7
 
 llm:
-  enabled: false          # set to true to use Claude for article summarization
-  provider: claude        # claude or openai
+  enabled: false
+  provider: claude
   model: claude-sonnet-4-6
-  summarize_threshold: 300  # summarize articles with summaries longer than N words
+  summarize_threshold: 300
 
 processing:
-  min_relevance_score: 0.2      # 0.0 to 1.0 — articles below this are discarded
-  semantic_matching: false       # requires sentence-transformers; falls back to keyword if unavailable
-  dedup_title_similarity: 0.85  # Jaccard threshold for duplicate detection
+  min_relevance_score: 0.2
+  semantic_matching: false        # set true after: pip install sentence-transformers torch
+  dedup_title_similarity: 0.85
+
+# ─── Sources ──────────────────────────────────────────────────────────────────
+# Tier 1 = high-signal structured  (prioritised in ranking)
+# Tier 2 = semi-structured community (limited in ranking)
+# Tier 3 = noisy / optional         (disabled by default)
 
 sources:
-  reddit:
-    enabled: false
+
+  # ════════════════════ TIER 1 — High Signal ════════════════════════════════
 
   arxiv:
     enabled: true
+    tier: 1
     categories:
       - cs.AI
       - cs.LG
       - cs.CL
       - cs.NE
       - cs.DC
-    max_results: 50
+    max_results: 60
 
   github:
     enabled: true
+    tier: 1
+    # Watched repos for release tracking
+    watched_repos:
+      - apache/airflow
+      - apache/spark
+      - kubernetes/kubernetes
+      - docker/compose
+      - huggingface/transformers
+      - huggingface/peft
+      - langchain-ai/langchain
+      - run-llama/llama_index
+      - ollama/ollama
+      - microsoft/autogen
+      - openai/openai-python
+      - anthropics/anthropic-sdk-python
+      - Teradata/teradataml
+    # Keyword-based repo search
     search_queries:
-      - "machine learning"
       - "large language model"
       - "LLM agent"
-      - "kubernetes operator"
+      - "RAG retrieval augmented"
       - "apache airflow"
-      - "pyspark"
-      - "NLP"
-    max_results_per_query: 10
-    include_releases: true
-
-  youtube:
-    enabled: false          # requires YOUTUBE_API_KEY in .env
-    search_queries:
-      - "AI agents 2024"
-      - "LLM tutorial"
+      - "pyspark data engineering"
+      - "NLP transformer"
       - "machine learning"
-      - "docker kubernetes"
-      - "apache airflow"
-    max_results_per_query: 10
+    max_results_per_query: 8
+    min_stars: 20
+    # Trending repos (new repos with high stars this week)
+    include_trending: true
+    trending_topics:
+      - LLM
+      - agent AI
+      - RAG
+      - spark
+      - airflow
+      - kubernetes
+      - MCP model context
+    max_trending_per_query: 5
+    trending_min_stars: 100
+
+  huggingface:
+    enabled: true
+    tier: 1
+    fetch_models: true
+    max_models: 15              # new models from Hub API
+
+  papers_with_code:
+    enabled: true
+    tier: 1
+    max_results: 30
+
+  semantic_scholar:
+    enabled: true
+    tier: 1
+    queries:
+      - "large language models agents"
+      - "generative AI NLP"
+      - "transformer machine learning"
+      - "PySpark data engineering"
+    max_results_per_query: 8
+    # Optional: set S2_API_KEY in .env for higher rate limits
+
+  acl:
+    enabled: true
+    tier: 1
+    queries:
+      - "NLP natural language processing"
+      - "machine translation neural"
+      - "text classification generation"
+    max_results_per_query: 8
+
+  official_blogs:
+    enabled: true
+    tier: 1
+    # Disable individual feeds without removing them:
+    feed_overrides:
+      []
+      # Example to disable a feed:
+      # - name: "Towards Data Science"
+      #   enabled: false
+    # Add your own RSS feeds here:
+    extra_feeds:
+      []
+      # Example:
+      # - name: "Andrej Karpathy Blog"
+      #   url: "https://karpathy.github.io/feed.xml"
+      #   topic_hints: ["AI", "Machine Learning"]
+      #   content_type: "News & Articles"
+
+  # ════════════════════ TIER 2 — Semi-Structured ════════════════════════════
 
   medium:
     enabled: true
+    tier: 2
     tags:
       - artificial-intelligence
       - machine-learning
@@ -102,30 +182,58 @@ sources:
       - data-science
       - nlp
       - genai
+      - data-engineering
+      - apache-airflow
 
-  google_scholar:
-    enabled: false          # rate-limited; enable with caution
-    queries:
-      - "large language models"
-      - "generative AI"
-      - "machine learning"
-    max_results_per_query: 5
+  reddit:
+    enabled: false              # enable after setting REDDIT_CLIENT_ID/SECRET in .env
+    tier: 2
+    subreddits:
+      - MachineLearning
+      - LocalLLaMA
+      - dataengineering
+      - artificial
+      - docker
+      - kubernetes
+      - apacheairflow
+      - Python
+      - MLOps
+    limit_per_subreddit: 50
+    filters:
+      min_upvotes: 50           # quality gate — only posts with >= 50 upvotes
+
+  youtube:
+    enabled: false              # enable after setting YOUTUBE_API_KEY in .env
+    tier: 2
+    search_queries:
+      - "AI agents 2025"
+      - "LLM fine-tuning"
+      - "Apache Airflow tutorial"
+      - "Kubernetes deep dive"
+    # Optionally restrict to specific channel IDs:
+    channel_ids: []             # leave empty to skip channel-specific fetch
+    max_results_per_query: 10
+    filters:
+      min_views: 10000          # only videos with >= 10k views
 
   docs:
-    enabled: true
+    enabled: false              # merged into official_blogs; keep for custom RSS
+    tier: 2
     feeds:
-      - name: Airflow Blog
-        url: https://airflow.apache.org/blog/index.xml
-        topic_hint: Airflow
-      - name: Kubernetes Blog
-        url: https://kubernetes.io/feed.xml
-        topic_hint: Kubernetes
-      - name: Docker Blog
-        url: https://www.docker.com/blog/feed/
-        topic_hint: Docker
       - name: PyPI New Packages
         url: https://pypi.org/rss/updates.xml
         topic_hint: Python
 
+  # ════════════════════ TIER 3 — Optional / Noisy ═══════════════════════════
+
+  google_scholar:
+    enabled: false              # heavily rate-limited; use semantic_scholar instead
+    tier: 3
+    queries:
+      - "large language models"
+      - "generative AI"
+    max_results_per_query: 5
+
   linkedin:
-    enabled: false          # LinkedIn API requires OAuth; see sources/linkedin_source.py
+    enabled: false              # placeholder; see sources/linkedin_source.py
+    tier: 3

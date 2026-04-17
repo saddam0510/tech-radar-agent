@@ -1,4 +1,4 @@
-"""Relevance filtering — keyword-based with optional semantic matching."""
+"""Relevance filtering — keyword + tier + popularity scoring pipeline."""
 from __future__ import annotations
 
 import re
@@ -9,27 +9,34 @@ from utils.logger import get_logger
 
 logger = get_logger("processing.filter")
 
+# Tier score contribution (tier 1 = full bonus, tier 3 = none)
+_TIER_BONUS = {1: 1.0, 2: 0.5, 3: 0.0}
+
 
 def _tokenize(text: str) -> set[str]:
     return set(re.findall(r"\b\w+\b", text.lower()))
 
 
 def _keyword_score(article: Article, topic: str, tools: list[str]) -> float:
-    """Return a 0–1 score based on keyword overlap."""
+    """Base relevance: keyword overlap against topic + tools."""
     topic_tokens = _tokenize(topic)
     tool_tokens = {t.lower() for t in tools}
-
     haystack = _tokenize(f"{article.title} {article.summary}")
 
     topic_hits = len(topic_tokens & haystack) / max(len(topic_tokens), 1)
-
-    # Bonus for matching tool keywords
     tool_hit = 1.0 if haystack & tool_tokens else 0.0
-
-    # Recency bonus (decays over 7 days)
     recency = max(0.0, 1.0 - article.age_days() / 7.0)
+    tier_bonus = _TIER_BONUS.get(article.tier, 0.5)
+    popularity = article.popularity_score  # already 0–1
 
-    return 0.55 * topic_hits + 0.25 * tool_hit + 0.20 * recency
+    # Weighted sum — must equal 1.0
+    return (
+        0.45 * topic_hits
+        + 0.18 * tool_hit
+        + 0.17 * recency
+        + 0.10 * tier_bonus
+        + 0.10 * popularity
+    )
 
 
 # ── Optional semantic matching ────────────────────────────────────────────────
@@ -43,9 +50,9 @@ def _get_encoder():
         try:
             from sentence_transformers import SentenceTransformer
             _encoder = SentenceTransformer("all-MiniLM-L6-v2")
-            logger.info("Semantic matching enabled (sentence-transformers)")
+            logger.info("Semantic matching enabled (all-MiniLM-L6-v2)")
         except ImportError:
-            logger.info("sentence-transformers not installed — using keyword matching only")
+            logger.info("sentence-transformers not installed — keyword-only scoring")
             _encoder = False
     return _encoder
 
@@ -57,8 +64,9 @@ def _semantic_score(article: Article, topic: str) -> Optional[float]:
     try:
         import numpy as np
         topic_emb = enc.encode(topic, convert_to_numpy=True)
-        article_text = f"{article.title}. {article.summary[:300]}"
-        art_emb = enc.encode(article_text, convert_to_numpy=True)
+        art_emb = enc.encode(
+            f"{article.title}. {article.summary[:300]}", convert_to_numpy=True
+        )
         cosine = float(
             np.dot(topic_emb, art_emb)
             / (np.linalg.norm(topic_emb) * np.linalg.norm(art_emb) + 1e-8)
@@ -69,7 +77,7 @@ def _semantic_score(article: Article, topic: str) -> Optional[float]:
         return None
 
 
-# ── Public API ─────────────────────────────────────────────────────────────────
+# ── Public API ────────────────────────────────────────────────────────────────
 
 def score_articles(
     articles: list[Article],
@@ -78,10 +86,17 @@ def score_articles(
     use_semantic: bool = False,
     min_score: float = 0.2,
 ) -> list[Article]:
-    """Assign relevance scores and filter out below-threshold articles.
+    """Score each article against all topics; assign the best-matching one.
 
-    Each article is evaluated against every topic; the best-matching topic
-    is assigned as article.assigned_topic and its score as article.relevance_score.
+    Scoring components (keyword mode):
+      45% topic keyword overlap
+      18% tool keyword match
+      17% recency (7-day decay)
+      10% tier bonus (tier 1 = full, tier 3 = none)
+      10% popularity (stars / upvotes / views / citations)
+
+    When semantic mode is on, keyword and semantic scores are blended 50/50.
+    Affinity boost is applied separately by topic_router.apply_affinity_boost().
     """
     scored: list[Article] = []
 
@@ -108,9 +123,10 @@ def score_articles(
             scored.append(article)
 
     logger.info(
-        "Filtered %d -> %d articles (min_score=%.2f)",
+        "Scored %d -> %d articles (min_score=%.2f, semantic=%s)",
         len(articles),
         len(scored),
         min_score,
+        use_semantic,
     )
     return scored

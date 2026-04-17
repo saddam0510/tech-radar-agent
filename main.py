@@ -28,6 +28,7 @@ from newsletter.builder import build_html, save_preview  # noqa: E402
 from processing.deduplicator import deduplicate  # noqa: E402
 from processing.filter import score_articles  # noqa: E402
 from processing.ranker import group_and_rank  # noqa: E402
+from processing.topic_router import apply_affinity_boost  # noqa: E402
 from sources import build_sources  # noqa: E402
 from utils.logger import get_logger  # noqa: E402
 
@@ -99,7 +100,10 @@ def run(preview: bool = False, dry_run: bool = False) -> None:
         min_score=proc_cfg.get("min_relevance_score", 0.2),
     )
 
-    # ── 5. Group & rank by topic ──────────────────────────────────────────────
+    # ── 4b. Apply source-affinity boost (topic_router) ────────────────────────
+    articles = apply_affinity_boost(articles)
+
+    # ── 5. Group & rank by section ────────────────────────────────────────────
     sections = group_and_rank(articles, topics=topics, max_per_topic=max_per_topic)
 
     if dry_run:

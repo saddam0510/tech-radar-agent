@@ -1,4 +1,4 @@
-"""Groups articles by section/topic and ranks within each group."""
+"""Tier-aware grouping and ranking by content section."""
 from __future__ import annotations
 
 from collections import defaultdict
@@ -8,7 +8,7 @@ from utils.logger import get_logger
 
 logger = get_logger("processing.ranker")
 
-# Ordered sections shown in the newsletter
+# Newsletter section order
 SECTIONS = [
     "Research",
     "Tools & Releases",
@@ -16,21 +16,43 @@ SECTIONS = [
     "Open Source",
 ]
 
-# Fallback for articles whose source didn't set content_type
+# Source → section fallback (for articles without content_type set)
 _SOURCE_SECTION: dict[str, str] = {
     "arXiv": "Research",
+    "Semantic Scholar": "Research",
+    "Papers with Code": "Research",
+    "ACL Anthology": "Research",
     "Google Scholar": "Research",
     "GitHub Releases": "Tools & Releases",
     "PyPI New Packages": "Tools & Releases",
+    "Hugging Face Hub": "Tools & Releases",
     "GitHub": "Open Source",
+    "GitHub Trending": "Open Source",
     "Medium": "News & Articles",
+    "Reddit": "News & Articles",
+    "YouTube": "News & Articles",
 }
 
 
 def _resolve_section(article: Article) -> str:
     if article.content_type:
         return article.content_type
-    return _SOURCE_SECTION.get(article.source, "News & Articles")
+    # Partial-match fallback
+    src = article.source
+    for key, section in _SOURCE_SECTION.items():
+        if key.lower() in src.lower():
+            return section
+    return "News & Articles"
+
+
+def _composite_rank(article: Article) -> tuple:
+    """Sort key: (tier asc, relevance desc, popularity desc, recency desc)."""
+    return (
+        article.tier,                   # lower tier number = better
+        -article.relevance_score,
+        -article.popularity_score,
+        article.age_days(),             # lower age = more recent
+    )
 
 
 def group_and_rank(
@@ -38,44 +60,61 @@ def group_and_rank(
     topics: list[str],
     max_per_topic: int = 5,
 ) -> dict[str, list[Article]]:
-    """Return an ordered dict: section → top articles sorted by relevance.
+    """Group articles into sections; within each section rank by composite score.
 
-    Each section collects all articles of that content type.
-    Within each section, articles are sorted by relevance then recency.
-    The total per section is capped at max_per_topic * 3 to keep the
-    newsletter readable, but each topic gets a fair share.
+    Strategy per section:
+    1. Bucket articles by assigned topic.
+    2. Take top-N from each topic (tier-aware sort).
+    3. Merge and re-sort the full section — Tier 1 articles naturally bubble up.
+
+    Returns an ordered dict: section_name → article list.
     """
-    # Bucket by section
-    buckets: dict[str, list[Article]] = defaultdict(list)
+    section_buckets: dict[str, list[Article]] = defaultdict(list)
     for article in articles:
         section = _resolve_section(article)
-        buckets[section].append(article)
+        section_buckets[section].append(article)
 
     result: dict[str, list[Article]] = {}
     for section in SECTIONS:
-        items = buckets.get(section, [])
+        items = section_buckets.get(section, [])
         if not items:
             continue
 
-        # Within each section, pick top-N per topic so every topic is represented
+        # Per-topic selection (fair quota)
         topic_buckets: dict[str, list[Article]] = defaultdict(list)
         for a in items:
             topic_buckets[a.assigned_topic or "General"].append(a)
 
         selected: list[Article] = []
         for topic in topics + ["General"]:
-            topic_items = topic_buckets.get(topic, [])
-            topic_items.sort(key=lambda a: (a.relevance_score, -a.age_days()), reverse=True)
-            selected.extend(topic_items[:max_per_topic])
+            bucket = topic_buckets.get(topic, [])
+            bucket.sort(key=_composite_rank)
+            selected.extend(bucket[:max_per_topic])
 
-        # Final sort of the whole section by relevance
-        selected.sort(key=lambda a: (a.relevance_score, -a.age_days()), reverse=True)
-        result[section] = selected
+        # Deduplicate (same article may appear via multiple topic buckets)
+        seen: set[str] = set()
+        unique: list[Article] = []
+        for a in selected:
+            if a.link not in seen:
+                seen.add(a.link)
+                unique.append(a)
+
+        # Final section sort: tier first, then relevance + popularity
+        unique.sort(key=_composite_rank)
+        result[section] = unique
 
     total = sum(len(v) for v in result.values())
+    tier_counts = defaultdict(int)
+    for arts in result.values():
+        for a in arts:
+            tier_counts[a.tier] += 1
+
     logger.info(
-        "Ranked %d articles across %d sections",
+        "Ranked %d articles across %d sections | T1=%d T2=%d T3=%d",
         total,
         len(result),
+        tier_counts[1],
+        tier_counts[2],
+        tier_counts[3],
     )
     return result

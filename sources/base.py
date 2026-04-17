@@ -19,9 +19,10 @@ class Article:
     relevance_score: float = 0.0
     assigned_topic: Optional[str] = None    # filled in by the processing layer
     content_type: str = ""                  # Research / Tools & Releases / News & Articles / Open Source
+    tier: int = 2                           # 1=high-signal, 2=semi-structured, 3=noisy
+    popularity_score: float = 0.0           # normalised 0–1 (stars / upvotes / views / citations)
 
     def __post_init__(self) -> None:
-        # Normalise to UTC-aware datetime
         if self.date.tzinfo is None:
             self.date = self.date.replace(tzinfo=timezone.utc)
 
@@ -32,10 +33,12 @@ class Article:
 class BaseSource(ABC):
     """Every content source must implement this interface."""
     name: str = "base"
+    default_tier: int = 2
 
     def __init__(self, config: dict) -> None:
         self.config = config
         self.enabled: bool = config.get("enabled", True)
+        self.tier: int = config.get("tier", self.default_tier)
 
     @abstractmethod
     async def fetch(
@@ -46,13 +49,8 @@ class BaseSource(ABC):
     ) -> list[Article]:
         """Fetch recent articles relevant to *topics* and *tools*.
 
-        Args:
-            topics: High-level topic labels (e.g. "LLMs", "Docker").
-            tools:  Specific tool keywords (e.g. "PySpark", "Claude").
-            days_back: Only return articles published within this many days.
-
-        Returns:
-            List of :class:`Article` objects.
+        Returns a list of :class:`Article` objects with tier and
+        popularity_score pre-populated.
         """
 
     # ── helpers ──────────────────────────────────────────────────────────────
@@ -67,3 +65,11 @@ class BaseSource(ABC):
         if len(text) <= max_chars:
             return text
         return text[:max_chars].rsplit(" ", 1)[0] + "…"
+
+    @staticmethod
+    def _normalise_popularity(value: float, scale: float) -> float:
+        """Soft-normalise a raw count to 0–1 using log scale."""
+        import math
+        if value <= 0:
+            return 0.0
+        return min(1.0, math.log1p(value) / math.log1p(scale))
