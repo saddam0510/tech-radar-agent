@@ -1,0 +1,131 @@
+schedule:
+  weekday: monday        # monday, tuesday, wednesday, thursday, friday, saturday, sunday
+  time: "08:00"          # 24h format, local time
+
+topics:
+  - Teradata ML
+  - LLMs
+  - GenAI
+  - AI
+  - AI Agents
+  - NLP
+  - Spark
+  - Docker
+  - Kubernetes
+  - MCPs
+  - Airflow
+  - Analysis
+  - Machine Learning
+
+tools:
+  - Python
+  - PySpark
+  - Airflow
+  - Jupyter
+  - Teradata SQL
+  - Teradata ML
+  - Claude
+  - GPTs
+  - OpenCLaW
+  - LangChain
+  - LlamaIndex
+  - HuggingFace
+  - Transformers
+  - FastAPI
+
+users:
+  - email: Saddam.salah510@gmail.com
+    name: Saddam
+
+newsletter:
+  title: "Weekly Tech Radar"
+  subtitle: "Your curated AI & Technology digest"
+  max_articles_per_topic: 5
+  days_back: 7
+
+llm:
+  enabled: false          # set to true to use Claude for article summarization
+  provider: claude        # claude or openai
+  model: claude-sonnet-4-6
+  summarize_threshold: 300  # summarize articles with summaries longer than N words
+
+processing:
+  min_relevance_score: 0.2      # 0.0 to 1.0 — articles below this are discarded
+  semantic_matching: false       # requires sentence-transformers; falls back to keyword if unavailable
+  dedup_title_similarity: 0.85  # Jaccard threshold for duplicate detection
+
+sources:
+  reddit:
+    enabled: false
+
+  arxiv:
+    enabled: true
+    categories:
+      - cs.AI
+      - cs.LG
+      - cs.CL
+      - cs.NE
+      - cs.DC
+    max_results: 50
+
+  github:
+    enabled: true
+    search_queries:
+      - "machine learning"
+      - "large language model"
+      - "LLM agent"
+      - "kubernetes operator"
+      - "apache airflow"
+      - "pyspark"
+      - "NLP"
+    max_results_per_query: 10
+    include_releases: true
+
+  youtube:
+    enabled: false          # requires YOUTUBE_API_KEY in .env
+    search_queries:
+      - "AI agents 2024"
+      - "LLM tutorial"
+      - "machine learning"
+      - "docker kubernetes"
+      - "apache airflow"
+    max_results_per_query: 10
+
+  medium:
+    enabled: true
+    tags:
+      - artificial-intelligence
+      - machine-learning
+      - llm
+      - docker
+      - kubernetes
+      - data-science
+      - nlp
+      - genai
+
+  google_scholar:
+    enabled: false          # rate-limited; enable with caution
+    queries:
+      - "large language models"
+      - "generative AI"
+      - "machine learning"
+    max_results_per_query: 5
+
+  docs:
+    enabled: true
+    feeds:
+      - name: Airflow Blog
+        url: https://airflow.apache.org/blog/index.xml
+        topic_hint: Airflow
+      - name: Kubernetes Blog
+        url: https://kubernetes.io/feed.xml
+        topic_hint: Kubernetes
+      - name: Docker Blog
+        url: https://www.docker.com/blog/feed/
+        topic_hint: Docker
+      - name: PyPI New Packages
+        url: https://pypi.org/rss/updates.xml
+        topic_hint: Python
+
+  linkedin:
+    enabled: false          # LinkedIn API requires OAuth; see sources/linkedin_source.py

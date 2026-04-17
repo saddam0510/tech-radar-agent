@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>{{ title }}</title>
+  <style type="text/css">
+    body { margin: 0; padding: 0; background-color: #f0f4f8; }
+    table { border-collapse: collapse; }
+    a { text-decoration: none; }
+    @media screen and (max-width: 620px) {
+      .outer-table { width: 100% !important; }
+      .article-title { font-size: 14px !important; }
+      .header-title  { font-size: 22px !important; }
+      .stat-num      { font-size: 18px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f8;-webkit-font-smoothing:antialiased;">
+
+<!-- preheader -->
+<div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#f0f4f8;">
+  {{ subtitle }} &mdash; {{ generated_at }}
+  &zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+</div>
+
+<!-- ═══════════════════ WRAPPER ══════════════════════════════════════════════ -->
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+<tr><td align="center" style="padding:24px 12px;">
+
+  <table class="outer-table" width="620" cellpadding="0" cellspacing="0"
+         role="presentation"
+         style="max-width:620px;width:100%;background:#ffffff;
+                border-radius:14px;overflow:hidden;
+                box-shadow:0 4px 28px rgba(0,0,0,0.09);">
+
+    <!-- ══ HEADER ══════════════════════════════════════════════════════════ -->
+    <tr>
+      <td style="background:linear-gradient(135deg,#0f2027 0%,#1c3a4a 55%,#24243e 100%);
+                 padding:38px 36px 28px;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+          <tr>
+            <td>
+              <table cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td style="background:rgba(255,255,255,0.12);border-radius:12px;
+                             padding:10px 14px;font-size:30px;line-height:1;">🔭</td>
+                  <td style="width:14px;"></td>
+                  <td>
+                    <div style="color:#ffffff;font-family:'Helvetica Neue',Arial,sans-serif;
+                                font-size:10px;font-weight:700;letter-spacing:3px;
+                                text-transform:uppercase;opacity:0.55;">Weekly Digest</div>
+                    <div class="header-title"
+                         style="color:#ffffff;font-family:'Helvetica Neue',Arial,sans-serif;
+                                font-size:26px;font-weight:800;line-height:1.2;
+                                letter-spacing:-0.5px;margin-top:3px;">{{ title }}</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr><td style="height:16px;"></td></tr>
+          <tr>
+            <td>
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td>
+                    <span style="color:rgba(255,255,255,0.55);
+                                 font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;">
+                      {{ subtitle }}
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="background:rgba(255,255,255,0.14);color:#ffffff;
+                                 font-family:'Helvetica Neue',Arial,sans-serif;
+                                 font-size:11px;font-weight:600;
+                                 padding:4px 11px;border-radius:20px;">
+                      {{ generated_at }}
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ══ STATS BAR ═══════════════════════════════════════════════════════ -->
+    <tr>
+      <td style="background:#1a3a4a;padding:14px 36px;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+          <tr>
+            <td align="center" style="border-right:1px solid rgba(255,255,255,0.12);padding-right:20px;">
+              <div class="stat-num"
+                   style="color:#38bdf8;font-family:'Helvetica Neue',Arial,sans-serif;
+                          font-size:22px;font-weight:800;">{{ total_articles }}</div>
+              <div style="color:rgba(255,255,255,0.45);font-family:'Helvetica Neue',Arial,sans-serif;
+                          font-size:10px;text-transform:uppercase;letter-spacing:1px;">Articles</div>
+            </td>
+            <td align="center" style="border-right:1px solid rgba(255,255,255,0.12);padding:0 20px;">
+              <div class="stat-num"
+                   style="color:#38bdf8;font-family:'Helvetica Neue',Arial,sans-serif;
+                          font-size:22px;font-weight:800;">{{ total_sections }}</div>
+              <div style="color:rgba(255,255,255,0.45);font-family:'Helvetica Neue',Arial,sans-serif;
+                          font-size:10px;text-transform:uppercase;letter-spacing:1px;">Sections</div>
+            </td>
+            <td align="center" style="padding-left:20px;">
+              <div class="stat-num"
+                   style="color:#38bdf8;font-family:'Helvetica Neue',Arial,sans-serif;
+                          font-size:22px;font-weight:800;">{{ total_sources }}</div>
+              <div style="color:rgba(255,255,255,0.45);font-family:'Helvetica Neue',Arial,sans-serif;
+                          font-size:10px;text-transform:uppercase;letter-spacing:1px;">Sources</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ══ BODY ════════════════════════════════════════════════════════════ -->
+    <tr>
+      <td style="padding:28px 28px 8px;">
+
+        <!-- Table of Contents -->
+        {% if sections %}
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+               style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;
+                      margin-bottom:28px;">
+          <tr>
+            <td style="padding:16px 20px;">
+              <div style="color:#64748b;font-family:'Helvetica Neue',Arial,sans-serif;
+                          font-size:11px;font-weight:700;text-transform:uppercase;
+                          letter-spacing:1.5px;margin-bottom:10px;">In this issue</div>
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                {% for section, articles in sections.items() %}
+                <tr>
+                  <td style="padding:3px 0;">
+                    <table cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td style="width:8px;height:8px;background:{{ section_colors[section] }};
+                                   border-radius:50%;"></td>
+                        <td style="padding-left:10px;">
+                          <span style="color:#0f172a;font-family:'Helvetica Neue',Arial,sans-serif;
+                                       font-size:13px;font-weight:600;">
+                            {{ section_icons[section] }} {{ section }}
+                          </span>
+                          <span style="color:#94a3b8;font-family:'Helvetica Neue',Arial,sans-serif;
+                                       font-size:12px;"> &mdash; {{ articles|length }} article{{ 's' if articles|length != 1 else '' }}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+        </table>
+        {% endif %}
+
+        <!-- ── SECTIONS ──────────────────────────────────────────────────── -->
+        {% for section, articles in sections.items() %}
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+               style="margin-bottom:32px;">
+
+          <!-- Section header -->
+          <tr>
+            <td style="padding-bottom:14px;border-bottom:2px solid #e8f0fe;">
+              <table cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td style="background:{{ section_colors[section] }};border-radius:8px;
+                             padding:6px 16px;">
+                    <span style="color:#ffffff;font-family:'Helvetica Neue',Arial,sans-serif;
+                                 font-size:13px;font-weight:700;letter-spacing:0.5px;">
+                      {{ section_icons[section] }} {{ section }}
+                    </span>
+                  </td>
+                  <td style="padding-left:10px;">
+                    <span style="color:#94a3b8;font-family:'Helvetica Neue',Arial,sans-serif;
+                                 font-size:12px;">
+                      {{ articles|length }} article{{ 's' if articles|length != 1 else '' }}
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Articles -->
+          {% for article in articles %}
+          <tr>
+            <td style="padding-top:12px;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+                     style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
+                            border-left:4px solid {{ section_colors[section] }};overflow:hidden;">
+                <tr>
+                  <td style="padding:15px 18px;">
+
+                    <!-- Topic badge + source -->
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td>
+                          {% if article.assigned_topic %}
+                          <span style="background:#ede9fe;color:#6d28d9;
+                                       font-family:'Helvetica Neue',Arial,sans-serif;
+                                       font-size:10px;font-weight:700;
+                                       padding:2px 8px;border-radius:4px;
+                                       text-transform:uppercase;letter-spacing:0.8px;">
+                            {{ article.assigned_topic }}
+                          </span>
+                          {% endif %}
+                          <span style="background:#e0f2fe;color:#0369a1;
+                                       font-family:'Helvetica Neue',Arial,sans-serif;
+                                       font-size:10px;font-weight:600;
+                                       padding:2px 8px;border-radius:4px;
+                                       margin-left:4px;">
+                            {{ article.source }}
+                          </span>
+                        </td>
+                        <td align="right">
+                          <span style="color:#94a3b8;font-family:'Helvetica Neue',Arial,sans-serif;
+                                       font-size:11px;">
+                            {{ article.date.strftime('%b %d') }}
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Title -->
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td style="padding-top:8px;">
+                          <a href="{{ article.link }}"
+                             class="article-title"
+                             style="color:#0f172a;font-family:'Helvetica Neue',Arial,sans-serif;
+                                    font-size:15px;font-weight:700;line-height:1.4;
+                                    text-decoration:none;">
+                            {{ article.title | truncate(110, True, '&hellip;') }}
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Summary -->
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td style="padding-top:6px;">
+                          <span style="color:#475569;font-family:'Helvetica Neue',Arial,sans-serif;
+                                       font-size:13px;line-height:1.6;">
+                            {{ article.summary | truncate(200, True, '&hellip;') }}
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Read more -->
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td style="padding-top:10px;" align="right">
+                          <a href="{{ article.link }}"
+                             style="color:{{ section_colors[section] }};
+                                    font-family:'Helvetica Neue',Arial,sans-serif;
+                                    font-size:11px;font-weight:700;text-decoration:none;">
+                            Read more &#8594;
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endfor %}
+
+        </table>
+        {% endfor %}
+
+        {% if not sections %}
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+          <tr>
+            <td align="center" style="padding:48px 20px;">
+              <div style="font-size:44px;">&#128214;</div>
+              <p style="color:#94a3b8;font-family:'Helvetica Neue',Arial,sans-serif;
+                         font-size:14px;margin:12px 0 0;">
+                No articles found this week. Check source configs or API keys.
+              </p>
+            </td>
+          </tr>
+        </table>
+        {% endif %}
+
+      </td>
+    </tr>
+
+    <!-- ══ FOOTER ══════════════════════════════════════════════════════════ -->
+    <tr>
+      <td style="background:#0f172a;padding:22px 36px;border-radius:0 0 14px 14px;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+          <tr>
+            <td>
+              <span style="color:rgba(255,255,255,0.35);
+                           font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;">
+                Generated by <strong style="color:rgba(255,255,255,0.65);">Tech Radar Agent</strong>
+                &bull; Running locally &bull; {{ generated_at }}
+              </span>
+            </td>
+          </tr>
+          <tr><td style="height:8px;"></td></tr>
+          <tr>
+            <td>
+              <span style="color:rgba(255,255,255,0.2);
+                           font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;">
+                Sources: {{ source_names | join(' &bull; ') }}
+              </span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+  </table>
+</td></tr>
+</table>
+
+</body>
+</html>
