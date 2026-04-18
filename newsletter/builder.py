@@ -15,17 +15,15 @@ _TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 # Visual identity per section
 SECTION_COLORS = {
-    "Research":        "#6366f1",   # indigo
-    "Tools & Releases": "#0ea5e9",  # sky blue
-    "News & Articles": "#10b981",   # emerald
-    "Open Source":     "#f59e0b",   # amber
+    "🔥 Directly Applicable":  "#ef4444",   # red — highest urgency
+    "⚙️ Tools & Stack Updates": "#0ea5e9",  # sky blue — engineering
+    "🧠 Worth Knowing":         "#8b5cf6",  # violet — knowledge
 }
 
 SECTION_ICONS = {
-    "Research":         "🔬",
-    "Tools & Releases": "🔧",
-    "News & Articles":  "📰",
-    "Open Source":      "💻",
+    "🔥 Directly Applicable":  "🔥",
+    "⚙️ Tools & Stack Updates": "⚙️",
+    "🧠 Worth Knowing":         "🧠",
 }
 
 

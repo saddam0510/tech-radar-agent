@@ -22,6 +22,11 @@ APScheduler>=3.10
 anthropic>=0.40       # Claude
 # openai>=1.0         # uncomment if using OpenAI instead
 
+# ─── Agentic mode (required when using python main.py --agent) ────────────────
+langchain>=0.2
+langchain-core>=0.2
+langchain-ollama>=0.1    # Ollama LLM integration
+
 # ─── Semantic matching (optional — improves relevance scoring) ─────────────────
 # Uncomment to enable semantic/embedding-based relevance matching:
 # sentence-transformers>=3.0

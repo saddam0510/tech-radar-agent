@@ -8,29 +8,28 @@ from utils.logger import get_logger
 
 logger = get_logger("processing.ranker")
 
-# Newsletter section order
+# Personalized newsletter sections — ordered by signal strength
 SECTIONS = [
-    "Research",
-    "Tools & Releases",
-    "News & Articles",
-    "Open Source",
+    "🔥 Directly Applicable",
+    "⚙️ Tools & Stack Updates",
+    "🧠 Worth Knowing",
 ]
 
-# Source → section fallback (for articles without content_type set)
+# Source → section fallback (only used if content_type not set by filter layer)
 _SOURCE_SECTION: dict[str, str] = {
-    "arXiv": "Research",
-    "Semantic Scholar": "Research",
-    "Papers with Code": "Research",
-    "ACL Anthology": "Research",
-    "Google Scholar": "Research",
-    "GitHub Releases": "Tools & Releases",
-    "PyPI New Packages": "Tools & Releases",
-    "Hugging Face Hub": "Tools & Releases",
-    "GitHub": "Open Source",
-    "GitHub Trending": "Open Source",
-    "Medium": "News & Articles",
-    "Reddit": "News & Articles",
-    "YouTube": "News & Articles",
+    "arXiv":            "🔥 Directly Applicable",
+    "Semantic Scholar": "🔥 Directly Applicable",
+    "Papers with Code": "🔥 Directly Applicable",
+    "ACL Anthology":    "🔥 Directly Applicable",
+    "Google Scholar":   "🔥 Directly Applicable",
+    "GitHub Releases":  "⚙️ Tools & Stack Updates",
+    "PyPI New Packages": "⚙️ Tools & Stack Updates",
+    "Hugging Face Hub": "⚙️ Tools & Stack Updates",
+    "GitHub":           "⚙️ Tools & Stack Updates",
+    "GitHub Trending":  "⚙️ Tools & Stack Updates",
+    "Medium":           "🧠 Worth Knowing",
+    "Reddit":           "🧠 Worth Knowing",
+    "YouTube":          "🧠 Worth Knowing",
 }
 
 

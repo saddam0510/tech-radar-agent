@@ -21,6 +21,7 @@ class Article:
     content_type: str = ""                  # Research / Tools & Releases / News & Articles / Open Source
     tier: int = 2                           # 1=high-signal, 2=semi-structured, 3=noisy
     popularity_score: float = 0.0           # normalised 0–1 (stars / upvotes / views / citations)
+    why_matters: str = ""                   # personalised relevance note (set by filter layer)
 
     def __post_init__(self) -> None:
         if self.date.tzinfo is None:

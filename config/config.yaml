@@ -2,39 +2,72 @@ schedule:
   weekday: monday
   time: "08:00"
 
+# ─── User Context (used by the personalization / filter layer) ────────────────
+user_context:
+  role: Senior Data Scientist
+  company: Teradata
+  industries:
+    - government
+    - telecommunications
+    - banking
+  use_cases:
+    - entity resolution
+    - record linkage
+    - fraud detection
+    - customer 360
+    - data quality
+    - NLP on tabular data
+    - large-scale ML on data warehouses
+  stack:
+    - Python
+    - PySpark
+    - Teradata SQL
+    - Teradata ML
+    - Airflow
+    - Kubernetes
+    - Docker
+    - MLOps
+    - LLMs
+    - AI Agents
+
 topics:
+  # Core stack
   - Teradata ML
-  - LLMs
-  - GenAI
-  - AI
-  - AI Agents
-  - NLP
-  - Spark
-  - Docker
-  - Kubernetes
-  - MCPs
+  - PySpark
   - Airflow
-  - Analysis
-  - Machine Learning
+  # Domain use cases
+  - Entity Resolution
+  - Record Linkage
+  - Fraud Detection
+  - Data Quality
+  # Data & ML engineering
+  - Data Engineering
+  - Feature Engineering
+  - MLOps
+  # AI/NLP
+  - NLP
+  - LLMs
+  - AI Agents
+  # Infrastructure
+  - Kubernetes
+  - Docker
 
 tools:
   - Python
   - PySpark
   - Airflow
-  - Jupyter
   - Teradata SQL
   - Teradata ML
-  - Claude
-  - GPTs
-  - OpenCLaW
+  - teradataml
+  - Kubernetes
+  - Docker
   - LangChain
   - LlamaIndex
   - HuggingFace
   - Transformers
-  - FastAPI
   - RAG
-  - LoRA
-  - RLHF
+  - MLflow
+  - FastAPI
 
 users:
   - email: Saddam.salah510@gmail.com
@@ -46,8 +79,8 @@ users:
 newsletter:
   title: "Weekly Tech Radar"
   subtitle: "Your curated AI & Technology digest"
-  max_articles_per_topic: 5
-  max_per_section: 5           # hard cap on articles shown per section in the email
+  max_articles_per_topic: 10
+  max_per_section: 10          # hard cap on articles shown per section in the email
   days_back: 7
 
 # Per-topic phrase gates — article must contain at least one phrase to match the topic.
@@ -65,6 +98,18 @@ llm:
   provider: claude
   model: claude-sonnet-4-6
   summarize_threshold: 300
+
+# ─── Agentic mode (python main.py --agent) ────────────────────────────────────
+# Requires: pip install langchain langchain-ollama langchain-core
+# Requires: Ollama running locally (https://ollama.com) with the model pulled:
+#   ollama pull llama3.1        (recommended — good tool-use support)
+#   ollama pull qwen2.5:7b      (smaller alternative)
+agent:
+  model: llama3.1               # Ollama model name
+  ollama_base_url: http://localhost:11434
+  max_iterations: 20            # agent loop safety cap
+  min_articles_target: 15       # agent aims for this many articles before finalizing
+  verbose: true                 # print agent reasoning steps
 
 processing:
   min_relevance_score: 0.2

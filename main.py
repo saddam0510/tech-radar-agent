@@ -6,6 +6,8 @@ Usage:
   python main.py --preview    # run pipeline, save HTML to disk, skip email
   python main.py --schedule   # start the weekly scheduler (blocking)
   python main.py --dry-run    # fetch only; print article counts; no email
+  python main.py --agent      # run agentic mode (Ollama + LangChain)
+  python main.py --agent --preview  # agentic mode, preview only
 """
 from __future__ import annotations
 
@@ -170,7 +172,18 @@ def main() -> None:
         action="store_true",
         help="Start the weekly scheduler (blocking — runs forever).",
     )
+    parser.add_argument(
+        "--agent",
+        action="store_true",
+        help="Run agentic mode: Ollama LLM decides which sources to fetch (requires Ollama running).",
+    )
     args = parser.parse_args()
+
+    if args.agent:
+        from agent.agent import run_agent
+        config = load_config()
+        run_agent(config, preview=args.preview)
+        return
 
     if args.schedule:
         from scheduler.local_scheduler import start

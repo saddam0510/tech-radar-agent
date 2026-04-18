@@ -254,6 +254,31 @@
                       </tr>
                     </table>
 
+                    <!-- Why it matters -->
+                    {% if article.why_matters %}
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td style="padding-top:8px;">
+                          <table cellpadding="0" cellspacing="0" role="presentation"
+                                 style="background:#fefce8;border-left:3px solid #f59e0b;
+                                        border-radius:0 4px 4px 0;padding:6px 10px;">
+                            <tr>
+                              <td>
+                                <span style="color:#92400e;font-family:'Helvetica Neue',Arial,sans-serif;
+                                             font-size:11px;font-weight:700;text-transform:uppercase;
+                                             letter-spacing:0.5px;">Why it matters: </span>
+                                <span style="color:#78350f;font-family:'Helvetica Neue',Arial,sans-serif;
+                                             font-size:12px;line-height:1.5;">
+                                  {{ article.why_matters }}
+                                </span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    {% endif %}
+
                     <!-- Read more -->
                     <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                       <tr>
